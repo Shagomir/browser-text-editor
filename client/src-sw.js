@@ -1,6 +1,6 @@
 const { offlineFallback, warmStrategyCache } = require("workbox-recipes");
 const { CacheFirst, StaleWhileRevalidate } = require("workbox-strategies");
-const { registerRoute, Route } = require("workbox-routing");
+const { registerRoute } = require("workbox-routing");
 const { CacheableResponsePlugin } = require("workbox-cacheable-response");
 const { ExpirationPlugin } = require("workbox-expiration");
 const { precacheAndRoute } = require("workbox-precaching/precacheAndRoute");
@@ -27,37 +27,40 @@ warmStrategyCache({
 registerRoute(({ request }) => request.mode === "navigate", pageCache);
 
 // TODO: Implement asset caching
-// Handle images:
-const imageRoute = new Route(
-  ({ request }) => {
-    return request.destination === "image";
-  },
-  new StaleWhileRevalidate({
-    cacheName: "images",
-  })
-);
-
-// Handle scripts:
-const scriptsRoute = new Route(
-  ({ request }) => {
-    return request.destination === "script";
-  },
-  new CacheFirst({
-    cacheName: "scripts",
-  })
-);
-
-// Handle styles:
-const stylesRoute = new Route(
-  ({ request }) => {
-    return request.destination === "style";
-  },
-  new CacheFirst({
-    cacheName: "styles",
-  })
-);
+// const resourceRoute = new Route(
+//   ({ request }) => ["style", "script", "worker"].includes(request.destination),
+//   new StaleWhileRevalidate({
+//     cacheName: "asset-cache",
+//     plugin: [
+//       new CacheableResponsePlugin({
+//         statuses: [0, 200],
+//       }),
+//     ],
+//   })
+// );
 
 // Register routes
-registerRoute(imageRoute);
-registerRoute(scriptsRoute);
-registerRoute(stylesRoute);
+registerRoute(
+  ({ request }) => ["style", "script", "worker"].includes(request.destination),
+  new StaleWhileRevalidate({
+    cacheName: "asset/resources",
+    plugin: [
+      new CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
+    ],
+  })
+);
+
+// // TODO: Implement asset caching
+// const resourceRoute = new Route(
+//   ({ request }) => {
+//     return request.destination === "asset/resource";
+//   },
+//   new StaleWhileRevalidate({
+//     cacheName: "asset/resource",
+//   })
+// );
+
+// // Register routes
+// registerRoute(resourceRoute);
